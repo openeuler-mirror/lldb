@@ -1,6 +1,6 @@
 Name:		lldb
 Version:	12.0.1
-Release:	1
+Release:	2
 Summary:	Next generation high-performance debugger
 
 License:	NCSA
@@ -30,8 +30,16 @@ BuildRequires:	gnupg2
 
 Patch0:     0001-PATCH-lldb-Portable-asm-ptrace.h-include.patch
 Patch1:     0002-PATCH-lldb-Support-DWARF-5-DW_FORM_line_strp-used-by.patch
+Patch2:     0003-add-EM_RISCV-in-ELFHeader.patch
+Patch3:     0004-apply-patch-for-ABISysV.patch
+Patch4:     0005-add-new-files-to-CMakeLists.patch
+Patch5:     0006-add-some-reg-info-for-RISC-V.patch
 
 %description
+%ifarch riscv64
+!!NOTE!!: This project has initially added some support for riscv64
+and only provide simple functions like the frontend of lldb.
+%endif
 LLDB is a next generation, high-performance debugger. It is built as a set
 of reusable components which highly leverage existing libraries in the
 larger LLVM Project, such as the Clang expression parser and LLVM
@@ -64,7 +72,11 @@ mkdir -p _build
 cd _build
 
 # Python version detection is broken
+%ifarch riscv64
+LDFLAGS="%{__global_ldflags} -latomic -lpthread -ldl"
+%else
 LDFLAGS="%{__global_ldflags} -lpthread -ldl"
+%endif
 
 CFLAGS="%{optflags} -Wno-error=format-security"
 CXXFLAGS="%{optflags} -Wno-error=format-security"
@@ -128,6 +140,9 @@ rm -f %{buildroot}%{python3_sitearch}/six.*
 %{python3_sitearch}/lldb
 
 %changelog
+* Wed Jun 08 2022 yangjinghua <yjhdandan@163.com> - 12.0.1-2
+- initial riscv64 support
+
 * Thu Jan 06 2022 Chen Chen <chen_aka_jan@163.com> - 12.0.1-1
 - upgrade lldb to 12.0.1
 
