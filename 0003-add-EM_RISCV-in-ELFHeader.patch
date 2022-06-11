@@ -1,0 +1,26 @@
+From 4d59209cd8158765e27a84559aa40f3e72d5d533 Mon Sep 17 00:00:00 2001
+From: SEmmmer <yjhdandan@163.com>
+Date: Thu, 9 Jun 2022 22:11:56 +0800
+Subject: [PATCH 1/4] add EM_RISCV in ELFHeader
+
+---
+ lldb/source/Plugins/ObjectFile/ELF/ELFHeader.cpp | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/lldb/source/Plugins/ObjectFile/ELF/ELFHeader.cpp b/lldb/source/Plugins/ObjectFile/ELF/ELFHeader.cpp
+index f0496be..abda0cd 100644
+--- a/lldb/source/Plugins/ObjectFile/ELF/ELFHeader.cpp
++++ b/lldb/source/Plugins/ObjectFile/ELF/ELFHeader.cpp
+@@ -208,6 +208,9 @@ unsigned ELFHeader::GetRelocationJumpSlotType() const {
+   case EM_S390:
+     slot = R_390_JMP_SLOT;
+     break;
++  case EM_RISCV:
++    slot = R_RISCV_JUMP_SLOT;
++    break;
+   }
+ 
+   return slot;
+-- 
+2.30.2
+
