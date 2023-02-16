@@ -1,0 +1,73 @@
+From 0247b5aaae7ae02f140ca9509dc68078cfe55898 Mon Sep 17 00:00:00 2001
+From: Emmmer <yjhdandan@163.com>
+Date: Wed, 10 Aug 2022 21:36:48 +0800
+Subject: [PATCH] [LLDB][RISCV] Add riscv software breakpoint trap code
+
+Added:
+- Take RISC-V `ebreak` instruction as breakpoint trap code, so our breakpoint works as expected now.
+
+Further work:
+- RISC-V does not support hardware single stepping yet. A software implementation may come in future PR.
+- Add support for RVC extension (the trap code, etc.).
+
+Reviewed By: DavidSpickett
+
+Differential Revision: https://reviews.llvm.org/D131566
+---
+ lldb/source/Host/common/NativeProcessProtocol.cpp | 7 +++++++
+ lldb/source/Target/Platform.cpp                   | 7 +++++++
+ 2 files changed, 14 insertions(+)
+
+diff --git a/lldb/source/Host/common/NativeProcessProtocol.cpp b/lldb/source/Host/common/NativeProcessProtocol.cpp
+index be521a31cb37..363699344146 100644
+--- a/lldb/source/Host/common/NativeProcessProtocol.cpp
++++ b/lldb/source/Host/common/NativeProcessProtocol.cpp
+@@ -505,6 +505,7 @@ NativeProcessProtocol::GetSoftwareBreakpointTrapOpcode(size_t size_hint) {
+   static const uint8_t g_s390x_opcode[] = {0x00, 0x01};
+   static const uint8_t g_ppc_opcode[] = {0x7f, 0xe0, 0x00, 0x08}; // trap
+   static const uint8_t g_ppcle_opcode[] = {0x08, 0x00, 0xe0, 0x7f}; // trap
++  static const uint8_t g_riscv_opcode[] = {0x73, 0x00, 0x10, 0x00}; // ebreak
+ 
+   switch (GetArchitecture().GetMachine()) {
+   case llvm::Triple::aarch64:
+@@ -533,6 +534,10 @@ NativeProcessProtocol::GetSoftwareBreakpointTrapOpcode(size_t size_hint) {
+   case llvm::Triple::ppc64le:
+     return llvm::makeArrayRef(g_ppcle_opcode);
+ 
++  case llvm::Triple::riscv32:
++  case llvm::Triple::riscv64:
++    return llvm::makeArrayRef(g_riscv_opcode);
++
+   default:
+     return llvm::createStringError(llvm::inconvertibleErrorCode(),
+                                    "CPU type not supported!");
+@@ -557,6 +562,8 @@ size_t NativeProcessProtocol::GetSoftwareBreakpointPCOffset() {
+   case llvm::Triple::ppc:
+   case llvm::Triple::ppc64:
+   case llvm::Triple::ppc64le:
++  case llvm::Triple::riscv32:
++  case llvm::Triple::riscv64:
+     // On these architectures the PC doesn't get updated for breakpoint hits.
+     return 0;
+ 
+diff --git a/lldb/source/Target/Platform.cpp b/lldb/source/Target/Platform.cpp
+index 717dc968f37d..ce902a1a59d4 100644
+--- a/lldb/source/Target/Platform.cpp
++++ b/lldb/source/Target/Platform.cpp
+@@ -1926,6 +1926,13 @@ size_t Platform::GetSoftwareBreakpointTrapOpcode(Target &target,
+     trap_opcode_size = sizeof(g_i386_opcode);
+   } break;
+ 
++  case llvm::Triple::riscv32:
++  case llvm::Triple::riscv64: {
++    static const uint8_t g_riscv_opcode[] = {0x73, 0x00, 0x10, 0x00}; // ebreak
++    trap_opcode = g_riscv_opcode;
++    trap_opcode_size = sizeof(g_riscv_opcode);
++  } break;
++
+   default:
+     return 0;
+   }
+-- 
+2.39.2
+

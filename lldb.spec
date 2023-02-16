@@ -1,6 +1,6 @@
 Name:		lldb
-Version:	12.0.1
-Release:	2
+Version:	15.0.7
+Release:	1
 Summary:	Next generation high-performance debugger
 
 License:	NCSA
@@ -28,12 +28,16 @@ Requires:	python3-lldb
 # For origin certification
 BuildRequires:	gnupg2
 
-Patch0:     0001-PATCH-lldb-Portable-asm-ptrace.h-include.patch
-Patch1:     0002-PATCH-lldb-Support-DWARF-5-DW_FORM_line_strp-used-by.patch
-Patch2:     0003-add-EM_RISCV-in-ELFHeader.patch
-Patch3:     0004-apply-patch-for-ABISysV.patch
-Patch4:     0005-add-new-files-to-CMakeLists.patch
-Patch5:     0006-add-some-reg-info-for-RISC-V.patch
+# backported from llvm16
+# https://reviews.llvm.org/D130686
+Patch0:     0001-LLDB-RISCV-Add-DWARF-Registers.patch
+# https://reviews.llvm.org/D130899
+Patch1:     0001-LLDB-RISCV-Add-riscv-register-enums.patch
+# https://reviews.llvm.org/D130342
+Patch2:     0001-LLDB-RISCV-Add-riscv-register-definition-and-read-wr.patch
+# https://reviews.llvm.org/D131566
+Patch3:     0001-LLDB-RISCV-Add-riscv-software-breakpoint-trap-code.patch
+Patch4:     0001-LLDB-RISCV-Make-software-single-stepping-work.patch
 
 %description
 %ifarch riscv64
@@ -77,9 +81,6 @@ LDFLAGS="%{__global_ldflags} -latomic -lpthread -ldl"
 %else
 LDFLAGS="%{__global_ldflags} -lpthread -ldl"
 %endif
-
-CFLAGS="%{optflags} -Wno-error=format-security"
-CXXFLAGS="%{optflags} -Wno-error=format-security"
 
 %cmake  .. \
 	-DCMAKE_BUILD_TYPE=RelWithDebInfo \
@@ -140,6 +141,9 @@ rm -f %{buildroot}%{python3_sitearch}/six.*
 %{python3_sitearch}/lldb
 
 %changelog
+* Wed Feb 15 2023 jchzhou <zhoujiacheng@iscas.ac.cn> - 15.0.7-1
+- Upgrade to 15.0.7
+
 * Wed Jun 08 2022 yangjinghua <yjhdandan@163.com> - 12.0.1-2
 - initial riscv64 support
 
